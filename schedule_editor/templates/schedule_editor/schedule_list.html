@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Lịch Học - Schedule Editor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static '/css/schedule_list.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-calendar-alt"></i> Quản Lý Lịch Học</h1>
+            <p>Tạo và quản lý các lịch học của bạn một cách dễ dàng</p>
+        </div>
+
+        <div class="actions">
+            <button class="create-btn" onclick="openCreateModal()">
+                <i class="fas fa-plus"></i>
+                Tạo Lịch Học Mới
+            </button>
+            
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Tìm kiếm lịch học..." id="searchInput" oninput="filterSchedules()">
+                <i class="fas fa-search" style="color: #7f8c8d;"></i>
+            </div>
+        </div>
+
+        {% if schedules %}
+        <div class="schedules-grid" id="schedules-grid">
+            {% for schedule in schedules %}
+            <div class="schedule-card" data-name="{{ schedule.name|lower }}" data-semester="{{ schedule.semester|lower }}">
+                <div class="schedule-header">
+                    <div>
+                        <div class="schedule-name">{{ schedule.name }}</div>
+                        {% if schedule.semester %}
+                        <div class="schedule-semester">{{ schedule.semester }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="schedule-info">
+                    <div class="info-item">
+                        <span class="info-number">{{ schedule.subjects.count }}</span>
+                        <span class="info-label">Môn học</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-number">{{ schedule.created_at|date:"M d" }}</span>
+                        <span class="info-label">Tạo ngày</span>
+                    </div>
+                </div>
+
+                <div class="schedule-meta">
+                    <span>
+                        <i class="fas fa-user"></i>
+                        {% if schedule.created_by %}
+                            {{ schedule.created_by.username }}
+                        {% else %}
+                            Không xác định
+                        {% endif %}
+                    </span>
+                    <span>
+                        <i class="fas fa-clock"></i>
+                        {{ schedule.created_at|timesince }} trước
+                    </span>
+                </div>
+
+                <div class="schedule-actions">
+                    <a href="{% url 'schedule_editor:editor' schedule.id %}" class="action-btn btn-edit">
+                        <i class="fas fa-edit"></i>
+                        Chỉnh sửa
+                    </a>
+                    <button class="action-btn btn-delete" onclick="deleteSchedule({{ schedule.id }})">
+                        <i class="fas fa-trash"></i>
+                        Xóa
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-calendar-plus"></i>
+            </div>
+            <div class="empty-title">Chưa có lịch học nào</div>
+            <div class="empty-text">
+                Bắt đầu tạo lịch học đầu tiên của bạn để quản lý các môn học một cách hiệu quả.
+            </div>
+            <button class="create-btn" onclick="openCreateModal()">
+                <i class="fas fa-plus"></i>
+                Tạo Lịch Học Đầu Tiên
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Create Schedule Modal -->
+    <div id="create-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Tạo Lịch Học Mới</h3>
+                <span class="close" onclick="closeCreateModal()">&times;</span>
+            </div>
+            
+            <form id="create-form" onsubmit="createSchedule(event)">
+                <div class="form-group">
+                    <label for="schedule-name">Tên lịch học *</label>
+                    <input type="text" id="schedule-name" required placeholder="Ví dụ: Lịch học Học kỳ 1 - 2025">
+                </div>
+                
+                <div class="form-group">
+                    <label for="schedule-semester">Học kỳ</label>
+                    <select id="schedule-semester">
+                        <option value="">Chọn học kỳ</option>
+                        <option value="1-2025">Học kỳ 1 - 2025</option>
+                        <option value="2-2025">Học kỳ 2 - 2025</option>
+                        <option value="h-2025">Học kỳ hè - 2025</option>
+                        <option value="1-2026">Học kỳ 1 - 2026</option>
+                        <option value="2-2026">Học kỳ 2 - 2026</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Tạo Lịch Học
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeCreateModal()">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Filter schedules function
+        function filterSchedules() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const scheduleCards = document.querySelectorAll('.schedule-card');
+            
+            scheduleCards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                const semester = card.getAttribute('data-semester');
+                
+                if (name.includes(searchTerm) || semester.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Modal functions
+        function openCreateModal() {
+            document.getElementById('create-modal').style.display = 'block';
+            document.getElementById('schedule-name').focus();
+        }
+
+        function closeCreateModal() {
+            document.getElementById('create-modal').style.display = 'none';
+            document.getElementById('create-form').reset();
+        }
+
+        // Create schedule function
+        async function createSchedule(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('schedule-name').value;
+            const semester = document.getElementById('schedule-semester').value;
+            
+            try {
+                const response = await fetch('/schedule-editor/api/schedules/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        semester: semester
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = `/schedule-editor/editor/${result.schedule.id}/`;
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating schedule:', error);
+                alert('Có lỗi xảy ra khi tạo lịch học');
+            }
+        }
+
+        // Duplicate schedule function
+        async function duplicateSchedule(scheduleId) {
+            if (!confirm('Bạn có muốn sao chép lịch học này không?')) return;
+            
+            try {
+                const response = await fetch(`/schedule-editor/api/schedules/${scheduleId}/duplicate/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error duplicating schedule:', error);
+                alert('Có lỗi xảy ra khi sao chép lịch học');
+            }
+        }
+
+        // Delete schedule function
+        async function deleteSchedule(scheduleId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa lịch học này? Hành động này không thể hoàn tác.')) return;
+            
+            try {
+                const response = await fetch(`/schedule-editor/api/schedules/${scheduleId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting schedule:', error);
+                alert('Có lỗi xảy ra khi xóa lịch học');
+            }
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('create-modal');
+            if (e.target === modal) {
+                closeCreateModal();
+            }
+        });
+
+        // ESC key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCreateModal();
+            }
+        });
+    </script>
+</body>
+</html>

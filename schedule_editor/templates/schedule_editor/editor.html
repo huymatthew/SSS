@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Editor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static '/css/editor.css' %}">
+</head>
+<body>
+    <hidden id="schedule-id" value="{{ schedule_id }}"></hidden>
+    <div class="container">
+        <!-- Left Panel - Subject List -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-book"></i> Danh sách môn học</h2>
+                <button class="add-subject-btn" onclick="openSearchSubjectModal()">
+                    <i class="fas fa-search"></i> Tìm & Thêm môn học
+                </button>
+            </div>
+            
+            <div class="subjects-list" id="subjects-list">
+                <!-- Subjects will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Right Panel - Canvas -->
+        <div class="right-panel">
+            <div class="canvas-container" id="canvas-container">
+                <div class="canvas" id="canvas">
+                    <svg class="canvas-grid" id="canvas-grid"></svg>
+                    <!-- Canvas content will be added here -->
+                </div>
+                
+                <div class="canvas-controls">
+                    <button class="zoom-btn" onclick="zoomIn()" title="Phòng to">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <div class="zoom-level" id="zoom-level">100%</div>
+                    <button class="zoom-btn" onclick="zoomOut()" title="Thu nhỏ">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="zoom-btn" onclick="resetZoom()" title="Đặt lại">
+                        <i class="fas fa-home"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Subject Modal -->
+    <div id="search-subject-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tìm kiếm môn học</h3>
+                <span class="close" onclick="closeSearchSubjectModal()">&times;</span>
+            </div>
+            
+            <div class="search-input">
+                <input type="text" id="search-input" placeholder="Tìm kiếm theo tên môn học, mã môn hoặc giảng viên..." autocomplete="off">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+            
+            <div class="search-results" id="search-results">
+                <div class="no-results">
+                    <i class="fas fa-search" style="font-size: 48px; color: #bdc3c7; margin-bottom: 15px;"></i>
+                    <p>Nhập từ khóa để tìm kiếm môn học</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static '/js/editor.js' %}"></script>
+</body>
+</html>
